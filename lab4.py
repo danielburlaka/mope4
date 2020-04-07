@@ -65,62 +65,67 @@ def students_t_test(norm_matrix, Y_matrix):
         return np.where(t > tableStudent(0.95, N, m))
     return np.where(t > tableStudent(0.95, N, m))
 
+flag = False
+while not flag:
+    try:
+        matrix_with_min_max_x = np.array([[15, 45], [30, 80], [15, 45]])
+        m = 6
+        N = 8
+        norm_matrix = np.array(list(product("01", repeat=3)), dtype=np.int)
+        norm_matrix[norm_matrix == 0] = -1
+        norm_matrix = np.insert(norm_matrix, 0, 1, axis=1)
+        plan_matrix = np.empty((8, 3))
+        for i in range(len(norm_matrix)):
+            for j in range(1, len(norm_matrix[i])):
+                if j == 1:
+                    if norm_matrix[i, j] == -1:
+                        plan_matrix[i, j-1] = 15
+                    elif norm_matrix[i, j] == 1:
+                        plan_matrix[i, j-1] = 45
+                elif j == 2:
+                    if norm_matrix[i, j] == -1:
+                        plan_matrix[i, j-1] = 30
+                    elif norm_matrix[i, j] == 1:
+                        plan_matrix[i, j-1] = 80
+                elif j == 3:
+                    if norm_matrix[i, j] == -1:
+                        plan_matrix[i, j-1] = 15
+                    elif norm_matrix[i, j] == 1:
+                        plan_matrix[i, j-1] = 45
+        plan_matr = np.insert(plan_matrix, 0, 1, axis=1)
+        Y_matrix = np.random.randint(200 + np.mean(matrix_with_min_max_x, axis=0)[0],
+                                     200 + np.mean(matrix_with_min_max_x, axis=0)[1], size=(N, m))
+        mean_Y = np.mean(Y_matrix, axis=1)
+        combination = list(combinations(range(1, 4), 2))
 
-matrix_with_min_max_x = np.array([[15, 45], [30, 80], [15, 45]])
-m = 6
-N = 8
-norm_matrix = np.array(list(product("01", repeat=3)), dtype=np.int)
-norm_matrix[norm_matrix == 0] = -1
-norm_matrix = np.insert(norm_matrix, 0, 1, axis=1)
-plan_matrix = np.empty((8, 3))
-for i in range(len(norm_matrix)):
-    for j in range(1, len(norm_matrix[i])):
-        if j == 1:
-            if norm_matrix[i, j] == -1:
-                plan_matrix[i, j-1] = 15
-            elif norm_matrix[i, j] == 1:
-                plan_matrix[i, j-1] = 45
-        elif j == 2:
-            if norm_matrix[i, j] == -1:
-                plan_matrix[i, j-1] = 30
-            elif norm_matrix[i, j] == 1:
-                plan_matrix[i, j-1] = 80
-        elif j == 3:
-            if norm_matrix[i, j] == -1:
-                plan_matrix[i, j-1] = 15
-            elif norm_matrix[i, j] == 1:
-                plan_matrix[i, j-1] = 45
-plan_matr = np.insert(plan_matrix, 0, 1, axis=1)
-Y_matrix = np.random.randint(200 + np.mean(matrix_with_min_max_x, axis=0)[0],
-                             200 + np.mean(matrix_with_min_max_x, axis=0)[1], size=(N, m))
-mean_Y = np.mean(Y_matrix, axis=1)
-combination = list(combinations(range(1, 4), 2))
+        for i in combination:
+            plan_matr = np.append(plan_matr, np.reshape(plan_matr[:, i[0]]*plan_matr[:, i[1]], (8, 1)), axis=1)
+            norm_matrix = np.append(norm_matrix, np.reshape(norm_matrix[:, i[0]]*norm_matrix[:, i[1]], (8, 1)), axis=1)
+        plan_matr = np.append(plan_matr, np.reshape(plan_matr[:, 1]*plan_matr[:, 2]*plan_matr[:, 3], (8, 1)), axis=1)
+        norm_matrix = np.append(norm_matrix, np.reshape(norm_matrix[:, 1]*norm_matrix[:, 2]*norm_matrix[:, 3], (8, 1)), axis=1)
 
-for i in combination:
-    plan_matr = np.append(plan_matr, np.reshape(plan_matr[:, i[0]]*plan_matr[:, i[1]], (8, 1)), axis=1)
-    norm_matrix = np.append(norm_matrix, np.reshape(norm_matrix[:, i[0]]*norm_matrix[:, i[1]], (8, 1)), axis=1)
-plan_matr = np.append(plan_matr, np.reshape(plan_matr[:, 1]*plan_matr[:, 2]*plan_matr[:, 3], (8, 1)), axis=1)
-norm_matrix = np.append(norm_matrix, np.reshape(norm_matrix[:, 1]*norm_matrix[:, 2]*norm_matrix[:, 3], (8, 1)), axis=1)
-
-if cochranCheck(Y_matrix):
-    b_natura = np.linalg.lstsq(plan_matr, mean_Y, rcond=None)[0]
-    b_norm = np.linalg.lstsq(norm_matrix, mean_Y, rcond=None)[0]
-    check1 = np.sum(b_natura * plan_matr, axis=1)
-    check2 = np.sum(b_norm * norm_matrix, axis=1)
-    indexes = students_t_test(norm_matrix, Y_matrix)
-    print("Matrix Experiment Plan: \n", plan_matr)
-    print("Normalized matrix: \n", norm_matrix)
-    print("Matrix reviews: \n", Y_matrix)
-    print("The average values of Y: ", mean_Y)
-    print("Naturalized coefficients: ", b_natura)
-    print("Normalized coefficients: ", b_norm)
-    print("Check #1: ", check1)
-    print("Check #2: ", check2)
-    print("Indices of coefficients that satisfy the Student's criterion: ", np.array(indexes)[0])
-    print("Student test: ", np.sum(b_natura[indexes] * np.reshape(plan_matr[:, indexes], (N, np.size(indexes))), axis=1))
-    if fisherCriteria(Y_matrix, np.size(indexes)):
-        print("The regression equation is adequate to the original.")
-    else:
-        print("The regression equation is inadequate to the original.")
-else:
-    print("Dispersion is heterogeneous")
+        if cochranCheck(Y_matrix):
+            b_natura = np.linalg.lstsq(plan_matr, mean_Y, rcond=None)[0]
+            b_norm = np.linalg.lstsq(norm_matrix, mean_Y, rcond=None)[0]
+            check1 = np.sum(b_natura * plan_matr, axis=1)
+            check2 = np.sum(b_norm * norm_matrix, axis=1)
+            indexes = students_t_test(norm_matrix, Y_matrix)
+            print("Matrix Experiment Plan: \n", plan_matr)
+            print("Normalized matrix: \n", norm_matrix)
+            print("Matrix reviews: \n", Y_matrix)
+            print("The average values of Y: ", mean_Y)
+            print("Naturalized coefficients: ", b_natura)
+            print("Normalized coefficients: ", b_norm)
+            print("Check #1: ", check1)
+            print("Check #2: ", check2)
+            print("Indices of coefficients that satisfy the Student's criterion: ", np.array(indexes)[0])
+            print("Student test: ", np.sum(b_natura[indexes] * np.reshape(plan_matr[:, indexes], (N, np.size(indexes))), axis=1))
+            if fisherCriteria(Y_matrix, np.size(indexes)):
+                flag = True
+                print("The regression equation is adequate to the original.")
+            else:
+                print("The regression equation is inadequate to the original.")
+        else:
+            print("Dispersion is heterogeneous")
+    except ValueError:
+        pass
